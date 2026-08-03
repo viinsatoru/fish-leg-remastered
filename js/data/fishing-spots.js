@@ -1,12 +1,11 @@
-// js/data/fishing-spots.js
+// js/data/fishing-spots.js - UPDATE BACKGROUND SPOT
 
-// ==================== FISHING SPOTS ====================
 export const BASE_FISHING_SPOTS = [
     {
         id: 0,
         name: "Danau Biasa",
-        background: "linear-gradient(135deg, #87CEEB, #1E90FF)",
-        color: "#1E90FF",
+        background: "linear-gradient(135deg, #1a3a5c, #2d6a8f, #4a8db7)",
+        color: "#4a8db7",
         fishes: [
             { id: 0, name: "Ikan Mas", rarity: "basic", chance: 25, price: 10, emoji: "🐟" },
             { id: 1, name: "Ikan Lele", rarity: "basic", chance: 20, price: 8, emoji: "🐠" },
@@ -26,8 +25,8 @@ export const BASE_FISHING_SPOTS = [
     {
         id: 1, 
         name: "Kuil Suci",
-        background: "linear-gradient(135deg, #0f0c29, #302b63, #24243e)",
-        color: "#4B0082",
+        background: "radial-gradient(ellipse at center, #0f0c29, #302b63, #24243e)",
+        color: "#6a3a8a",
         fishes: [
             { id: 100, name: "Ikan Suci", rarity: "basic", chance: 20, price: 15, emoji: "🐟" },
             { id: 101, name: "Ikan Monk", rarity: "basic", chance: 18, price: 12, emoji: "🐠" },
@@ -48,8 +47,8 @@ export const BASE_FISHING_SPOTS = [
     {
         id: 2,
         name: "Laut Dalam", 
-        background: "linear-gradient(135deg, #00008B, #000080, #191970)",
-        color: "#000080",
+        background: "radial-gradient(ellipse at bottom, #00008B, #000080, #0a0a2a)",
+        color: "#1a3a6a",
         fishes: [
             { id: 200, name: "Ikan Teri", rarity: "basic", chance: 15, price: 20, emoji: "🐟" },
             { id: 201, name: "Ikan Tuna", rarity: "basic", chance: 15, price: 25, emoji: "🐠" },
@@ -70,8 +69,8 @@ export const BASE_FISHING_SPOTS = [
     {
         id: 3,
         name: "Sungai Emas",
-        background: "linear-gradient(135deg, #FFD700, #FFA500, #FF8C00)",
-        color: "#FFD700", 
+        background: "linear-gradient(135deg, #1a1a0a, #4a3a1a, #7a5a2a, #c49a3a)",
+        color: "#c49a3a", 
         fishes: [
             { id: 300, name: "Ikan Koi", rarity: "basic", chance: 15, price: 30, emoji: "🐟" },
             { id: 301, name: "Ikan Komet", rarity: "basic", chance: 12, price: 25, emoji: "🐠" },
@@ -92,8 +91,8 @@ export const BASE_FISHING_SPOTS = [
     {
         id: 4,
         name: "Luar Angkasa",
-        background: "linear-gradient(135deg, #000033, #000066, #19003a, #330066)",
-        color: "#6600cc",
+        background: "radial-gradient(ellipse at center, #0a0a2a, #1a0a3a, #2a0a5a, #0a0a1a)",
+        color: "#5a2a8a",
         fishes: [
             { id: 400, name: "Bintang Jatuh", rarity: "basic", chance: 18, price: 60, emoji: "⭐" },
             { id: 401, name: "Komet Kecil", rarity: "basic", chance: 15, price: 55, emoji: "☄️" },
@@ -110,7 +109,7 @@ export const BASE_FISHING_SPOTS = [
     {
         id: 5,
         name: "🧠 Brainrot",
-        background: "linear-gradient(135deg, #ff00ff, #00ffff, #ff00ff)",
+        background: "radial-gradient(ellipse at center, #2a0a2a, #4a1a4a, #6a2a6a, #ff00ff33)",
         color: "#ff00ff",
         fishes: [
             { id: 500, name: "Skibidi Toilet", rarity: "basic", chance: 25, price: 69, emoji: "🚽", spot: "brainrot" },
@@ -129,7 +128,7 @@ export const BASE_FISHING_SPOTS = [
     {
         id: 6,
         name: "₿ Crypto",
-        background: "linear-gradient(135deg, #F7931A, #4CAF50, #F7931A)",
+        background: "radial-gradient(ellipse at center, #1a1a0a, #2a3a1a, #4a5a2a, #F7931A33)",
         color: "#F7931A",
         fishes: [
             { id: 600, name: "Dogecoin", rarity: "basic", chance: 35, price: 10, emoji: "🐕", spot: "crypto" },
@@ -143,12 +142,11 @@ export const BASE_FISHING_SPOTS = [
     }
 ];
 
-// ==================== ATLANTIS SPOT ====================
 export const ATLANTIS_SPOT = {
     id: 7,
     name: "🌊 Atlantis",
-    background: "linear-gradient(135deg, #00ffff, #006994, #000080)",
-    color: "#00ffff",
+    background: "radial-gradient(ellipse at center, #001a2a, #003a5a, #005a8a, #00ffff22)",
+    color: "#00ddff",
     isEventSpot: false,
     fishes: [
         { id: 700, name: "Dolphin", rarity: "legendary", chance: 70, price: 200, emoji: "🐬", spot: "atlantis" },
@@ -157,11 +155,10 @@ export const ATLANTIS_SPOT = {
     ]
 };
 
-// ==================== VALINOR SPOT ====================
 export const VALINOR_SPOT = {
     id: 8,
     name: "🏝️ Valinor",
-    background: "linear-gradient(135deg, #FFD700, #FFA500, #FF8C00)",
+    background: "radial-gradient(ellipse at center, #1a0a0a, #3a1a0a, #5a2a0a, #FFD70022)",
     color: "#FFD700",
     isEventSpot: false,
     requiresGear: "crownOfSilmarillion",
@@ -176,10 +173,8 @@ export const VALINOR_SPOT = {
     ]
 };
 
-// ==================== EXPORT ALL SPOTS ====================
 export const FISHING_SPOTS = [...BASE_FISHING_SPOTS, ATLANTIS_SPOT, VALINOR_SPOT];
 
-// ==================== HELPER FUNCTIONS ====================
 export function getAllFishes() {
     return FISHING_SPOTS.flatMap(spot => spot.fishes);
 }
