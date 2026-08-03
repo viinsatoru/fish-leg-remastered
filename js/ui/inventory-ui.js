@@ -43,11 +43,14 @@ class InventoryUI {
         if (this.sellBtn) this.sellBtn.addEventListener('click', () => this.sellSelectedFish());
         if (this.sellAllBtn) this.sellAllBtn.addEventListener('click', () => this.sellAllFish());
 
-        // Setup auto-sell toggles
+        // ============ AUTO SELL - TAMBAH MYTHICAL ============
         const autoSellBasic = document.getElementById('auto-sell-basic');
         const autoSellLegendary = document.getElementById('auto-sell-legendary');
+        const autoSellMythical = document.getElementById('auto-sell-mythical');
+        
         if (autoSellBasic) autoSellBasic.addEventListener('change', (e) => this.toggleAutoSell('basic', e.target.checked));
         if (autoSellLegendary) autoSellLegendary.addEventListener('change', (e) => this.toggleAutoSell('legendary', e.target.checked));
+        if (autoSellMythical) autoSellMythical.addEventListener('change', (e) => this.toggleAutoSell('mythical', e.target.checked));
 
         // Setup minigame click
         this.setupMinigameClick();
@@ -76,7 +79,6 @@ class InventoryUI {
                 } else {
                     notification.info('⏰ Coba lagi lain kali!');
                 }
-                // Sembunyikan minigame setelah diklik
                 minigameIndicator.style.display = 'none';
                 fishingSystem.stopMinigame();
             });
@@ -318,10 +320,13 @@ class InventoryUI {
         saveManager.forceSave();
     }
 
-    // ==================== AUTO SELL ====================
+    // ==================== AUTO SELL - FIXED ====================
     toggleAutoSell(rarity, enabled) {
-        window.autoSellSettings = window.autoSellSettings || { basic: false, legendary: false };
+        if (!window.autoSellSettings) {
+            window.autoSellSettings = { basic: false, legendary: false, mythical: false };
+        }
         window.autoSellSettings[rarity] = enabled;
+        console.log(`⚡ Auto-sell ${rarity}: ${enabled ? 'ON' : 'OFF'}`, window.autoSellSettings);
         notification.info(`⚡ Auto-sell ${rarity}: ${enabled ? 'ON' : 'OFF'}`);
     }
 
@@ -353,4 +358,4 @@ class InventoryUI {
 export const inventoryUI = new InventoryUI();
 
 window.toggleFavoriteFish = (index) => inventoryUI.toggleFavoriteFish(index);
-window.autoSellSettings = { basic: false, legendary: false };
+window.autoSellSettings = { basic: false, legendary: false, mythical: false };
