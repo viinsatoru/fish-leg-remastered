@@ -1,4 +1,4 @@
-// js/main.js - Entry Point (FULLY FIXED - MINING 100% WORKING)
+// js/main.js - Entry Point (FULLY FIXED - SPOT BACKGROUND WORKING)
 
 import { gameState, gameData } from './core/game-state.js';
 import { saveManager } from './core/save-manager.js';
@@ -31,13 +31,262 @@ import { GAME_VERSIONS } from './config/version.js';
 import { FISHING_SPOTS } from './data/fishing-spots.js';
 import { DEPTH_LEVELS } from './config/constants.js';
 
+// ==================== SPOT SYSTEM ====================
+let currentSpot = 0;
+let currentDepth = "surface";
+
+// ==================== SWITCH FISHING SPOT (FIXED) ====================
+function switchFishingSpot(spotId) {
+    console.log(`🎣 Pindah ke spot: ${spotId}`);
+    currentSpot = spotId;
+    const spot = FISHING_SPOTS[spotId];
+    
+    if (!spot) {
+        console.error('❌ Spot not found!');
+        return;
+    }
+    
+    console.log(`📍 Spot name: ${spot.name}`);
+    console.log(`🎨 Background: ${spot.background}`);
+    
+    // ============ UBAH BACKGROUND BODY ============
+    document.body.style.background = spot.background;
+    document.body.style.backgroundSize = 'cover';
+    document.body.style.backgroundAttachment = 'fixed';
+    document.body.style.backgroundPosition = 'center';
+    document.body.style.transition = 'background 0.8s ease';
+    
+    // ============ UBAH BACKGROUND MAIN CONTENT ============
+    const mainContent = document.querySelector('.main-content');
+    if (mainContent) {
+        mainContent.style.background = `linear-gradient(145deg, ${spot.color}33, rgba(15,14,26,0.85))`;
+        mainContent.style.transition = 'background 0.8s ease';
+        mainContent.style.border = `1px solid ${spot.color}22`;
+    }
+    
+    // ============ UBAH BACKGROUND FISHING AREA ============
+    const fishingArea = document.querySelector('.fishing-area');
+    if (fishingArea) {
+        fishingArea.style.background = `
+            radial-gradient(ellipse at 30% 80%, ${spot.color}44, transparent 70%),
+            radial-gradient(ellipse at 70% 20%, ${spot.color}22, transparent 50%),
+            linear-gradient(180deg, rgba(15,14,26,0.6), rgba(15,14,26,0.9))
+        `;
+        fishingArea.style.transition = 'background 1s ease';
+        fishingArea.style.border = `1px solid ${spot.color}33`;
+    }
+    
+    // ============ UPDATE UI ============
+    updateSpotButtons();
+    updateSpotDisplay();
+    createFishAnimation();
+    updateDepthButtons();
+    
+    if (window.uiManager) {
+        uiManager.updateLuckDisplay();
+        uiManager.updateWeatherDisplay();
+    }
+    
+    // Notifikasi
+    if (window.notification) {
+        notification.success(`🎣 Pindah ke ${spot.name}`);
+    }
+    
+    console.log(`✅ Spot changed to: ${spot.name}`);
+}
+
+// ==================== UPDATE SPOT BUTTONS ====================
+function updateSpotButtons() {
+    const spotButtons = document.querySelectorAll('.spot-btn');
+    spotButtons.forEach(btn => {
+        const spotId = parseInt(btn.getAttribute('data-spot'));
+        const spot = FISHING_SPOTS[spotId];
+        if (spotId === currentSpot) {
+            btn.style.background = '#FFD700';
+            btn.style.color = '#000';
+            btn.style.boxShadow = '0 0 30px rgba(255,215,0,0.3)';
+            btn.classList.add('active');
+        } else {
+            btn.style.background = spot.color;
+            btn.style.color = '#fff';
+            btn.style.boxShadow = 'none';
+            btn.classList.remove('active');
+        }
+    });
+}
+
+// ==================== UPDATE SPOT DISPLAY ====================
+function updateSpotDisplay() {
+    const spotDisplay = document.getElementById('spot-display');
+    if (!spotDisplay) return;
+    const spot = FISHING_SPOTS[currentSpot];
+    if (spot) {
+        spotDisplay.innerHTML = `<span style="color: white; font-weight: bold;">📍 ${spot.name}</span>`;
+    }
+}
+
+// ==================== CREATE FISH ANIMATION ====================
+function createFishAnimation() {
+    const fishDisplay = document.getElementById('fish-display');
+    if (!fishDisplay) return;
+    
+    fishDisplay.innerHTML = '';
+    const spot = FISHING_SPOTS[currentSpot];
+    if (!spot) return;
+    
+    const fishes = spot.fishes || [];
+    for (let i = 0; i < Math.min(8, fishes.length); i++) {
+        const fish = document.createElement('div');
+        const fishData = fishes[i % fishes.length];
+        fish.className = 'fish';
+        
+        let fishColor = '#87CEEB';
+        if (fishData.rarity === 'legendary') fishColor = '#FFD700';
+        if (fishData.rarity === 'mythical') fishColor = '#FF69B4';
+        if (fishData.rarity === 'secret') fishColor = '#00FFFF';
+        if (fishData.rarity === 'special') fishColor = '#FF00FF';
+        
+        fish.style.color = fishColor;
+        fish.style.position = 'absolute';
+        fish.style.fontSize = '1.5rem';
+        fish.style.textShadow = `0 0 10px ${fishColor}44`;
+        
+        const top = Math.random() * 150 + 50;
+        const delay = Math.random() * 15;
+        const speed = 8 + Math.random() * 12;
+        
+        fish.style.top = `${top}px`;
+        fish.style.animation = `swim ${speed}s infinite linear`;
+        fish.style.animationDelay = `${delay}s`;
+        fish.textContent = fishData.emoji || '🐟';
+        
+        fishDisplay.appendChild(fish);
+    }
+}
+
+// ==================== UPDATE DEPTH BUTTONS ====================
+function updateDepthButtons() {
+    const depthContainer = document.getElementById('depth-buttons');
+    if (!depthContainer) return;
+    
+    depthContainer.innerHTML = '';
+    
+    Object.keys(DEPTH_LEVELS).forEach(key => {
+        const depth = DEPTH_LEVELS[key];
+        const btn = document.createElement('button');
+        btn.className = 'depth-btn';
+        btn.textContent = `${depth.icon} ${depth.name}`;
+        
+        const isUnlocked = fishingSystem.isDepthUnlocked(key);
+        const isActive = key === currentDepth;
+        
+        if (!isUnlocked) {
+            btn.classList.add('locked');
+        }
+        if (isActive) {
+            btn.classList.add('active');
+        }
+        
+        btn.addEventListener('click', () => {
+            if (isUnlocked) {
+                currentDepth = key;
+                fishingSystem.switchDepth(key);
+                updateDepthButtons();
+                if (window.uiManager) uiManager.updateLuckDisplay();
+                if (window.notification) notification.info(`🌊 Pindah ke ${depth.name}`);
+            } else {
+                if (window.notification) notification.error('🔒 Beli gear dulu!');
+            }
+        });
+        
+        depthContainer.appendChild(btn);
+    });
+}
+
+// ==================== SWITCH TO MINING ====================
+function switchToMining() {
+    console.log('⛏️⛏️⛏️ switchToMining() CALLED! ⛏️⛏️⛏️');
+    
+    if (!checkMiningUnlock()) {
+        notification.error('🔒 MINING TERKUNCI! Butuh Miner Helm (250💎) + Flashlight (1 Bitcoin)!');
+        return;
+    }
+    
+    const mainMenu = document.getElementById('main-menu');
+    let miningMenu = document.getElementById('mining-menu');
+    
+    if (mainMenu) mainMenu.style.display = 'none';
+    
+    if (!miningMenu) {
+        console.warn('⚠️ miningMenu not found! Creating...');
+        createMiningMenu();
+        setTimeout(() => {
+            const newMenu = document.getElementById('mining-menu');
+            if (newMenu) {
+                newMenu.style.display = 'block';
+                console.log('✅ miningMenu created and shown');
+                loadMiningContent();
+            }
+        }, 150);
+    } else {
+        miningMenu.style.display = 'block';
+        console.log('✅ miningMenu shown');
+        loadMiningContent();
+    }
+}
+
+function loadMiningContent() {
+    setTimeout(() => {
+        if (typeof miningUI !== 'undefined') {
+            console.log('✅ miningUI found, loading...');
+            miningUI.loadMiningMain();
+            miningUI.loadMiningShop();
+            miningUI.loadMiningSkillTree();
+            miningUI.loadMiningExchange();
+            miningUI.updateMiningStats();
+            console.log('✅ Mining UI loaded');
+        } else {
+            console.error('❌ miningUI is undefined!');
+        }
+    }, 200);
+}
+
+// ==================== SWITCH TO DUNGEON ====================
+function switchToDungeon() {
+    if (!checkDungeonUnlock()) {
+        notification.error('🔒 DUNGEON TERKUNCI! Butuh Ghost Ship (500💎) + One Ring (10 Secret Fish)!');
+        return;
+    }
+    
+    document.getElementById('main-menu').style.display = 'none';
+    document.getElementById('dungeon-menu').style.display = 'block';
+    
+    dungeonUI.loadDungeonCharacter();
+    dungeonUI.loadDungeonShop();
+    dungeonUI.loadDungeonLevels();
+    dungeonUI.loadTokenExchange();
+    dungeonUI.updateDungeonStats();
+}
+
+function switchToMain() {
+    document.getElementById('dungeon-menu').style.display = 'none';
+    document.getElementById('main-menu').style.display = 'block';
+}
+
+function switchToMainFromMining() {
+    console.log('◀ switchToMainFromMining() called');
+    const miningMenu = document.getElementById('mining-menu');
+    const mainMenu = document.getElementById('main-menu');
+    if (miningMenu) miningMenu.style.display = 'none';
+    if (mainMenu) mainMenu.style.display = 'block';
+}
+
 // ==================== CHECK MINING UNLOCK ====================
 function checkMiningUnlock() {
     console.log('🔍 Checking mining unlock...');
     const hasHelm = gameData.depthGear.minerHelm === true;
     const hasFlashlight = gameData.specialItems.flashlight === true;
     gameData.mining.unlocked = hasHelm && hasFlashlight;
-    console.log('Mining unlocked:', gameData.mining.unlocked);
     
     const miningBtn = document.getElementById('mining-menu-btn');
     if (miningBtn) {
@@ -45,16 +294,12 @@ function checkMiningUnlock() {
             miningBtn.disabled = false;
             miningBtn.style.background = 'linear-gradient(45deg, #8B4513, #D2691E)';
             miningBtn.style.cursor = 'pointer';
-            miningBtn.title = 'Masuk ke area Mining!';
             miningBtn.innerHTML = '⛏️ MINING';
-            console.log('✅ Mining button enabled!');
         } else {
             miningBtn.disabled = true;
             miningBtn.style.background = '#666';
             miningBtn.style.cursor = 'not-allowed';
-            miningBtn.title = '🔒 TERKUNCI! Butuh Miner Helm (250💎) + Flashlight (1 Bitcoin)';
             miningBtn.innerHTML = '🔒 MINING TERKUNCI 🔒';
-            console.log('❌ Mining button disabled');
         }
     }
     return gameData.mining.unlocked;
@@ -68,14 +313,10 @@ function checkDungeonUnlock() {
         if (isUnlocked) {
             dungeonBtn.disabled = false;
             dungeonBtn.style.background = 'linear-gradient(45deg, #ff0000, #ff6b6b)';
-            dungeonBtn.style.cursor = 'pointer';
-            dungeonBtn.title = 'Masuk Dungeon';
             dungeonBtn.innerHTML = '⚔️ MASUK DUNGEON ⚔️';
         } else {
             dungeonBtn.disabled = true;
             dungeonBtn.style.background = '#666';
-            dungeonBtn.style.cursor = 'not-allowed';
-            dungeonBtn.title = '🔒 TERKUNCI! Butuh Ghost Ship (500💎) + One Ring (10 Secret Fish)';
             dungeonBtn.innerHTML = '🔒 DUNGEON TERKUNCI 🔒';
         }
     }
@@ -137,101 +378,6 @@ function createMiningButton() {
     return miningBtn;
 }
 
-// ==================== SWITCH TO MINING ====================
-function switchToMining() {
-    console.log('⛏️⛏️⛏️ switchToMining() CALLED! ⛏️⛏️⛏️');
-    
-    if (!checkMiningUnlock()) {
-        notification.error('🔒 MINING TERKUNCI! Butuh Miner Helm (250💎) + Flashlight (1 Bitcoin)!');
-        return;
-    }
-    
-    const mainMenu = document.getElementById('main-menu');
-    let miningMenu = document.getElementById('mining-menu');
-    
-    if (mainMenu) mainMenu.style.display = 'none';
-    
-    if (!miningMenu) {
-        console.warn('⚠️ miningMenu not found! Creating...');
-        createMiningMenu();
-        setTimeout(() => {
-            const newMenu = document.getElementById('mining-menu');
-            if (newMenu) {
-                newMenu.style.display = 'block';
-                console.log('✅ miningMenu created and shown');
-                loadMiningContent();
-            }
-        }, 150);
-    } else {
-        miningMenu.style.display = 'block';
-        console.log('✅ miningMenu shown');
-        loadMiningContent();
-    }
-}
-
-function loadMiningContent() {
-    setTimeout(() => {
-        if (typeof miningUI !== 'undefined') {
-            console.log('✅ miningUI found, loading...');
-            miningUI.loadMiningMain();
-            miningUI.loadMiningShop();
-            miningUI.loadMiningSkillTree();
-            miningUI.loadMiningExchange();
-            miningUI.updateMiningStats();
-            console.log('✅ Mining UI loaded');
-        } else {
-            console.error('❌ miningUI is undefined!');
-        }
-    }, 200);
-}
-
-// ==================== HANDLE MINING TAB CLICK (GLOBAL) ====================
-window.handleMiningTabClick = function(tabId) {
-    console.log('📑 Mining tab clicked (global):', tabId);
-    
-    document.querySelectorAll('.mining-tab').forEach(t => t.classList.remove('active'));
-    const tab = document.querySelector(`.mining-tab[data-mining-tab="${tabId}"]`);
-    if (tab) tab.classList.add('active');
-    
-    document.querySelectorAll('.mining-pane').forEach(p => p.classList.remove('active'));
-    const pane = document.getElementById(`mining-${tabId}`);
-    if (pane) pane.classList.add('active');
-    
-    if (typeof miningUI !== 'undefined') {
-        switch(tabId) {
-            case 'main': miningUI.loadMiningMain(); break;
-            case 'shop': miningUI.loadMiningShop(); break;
-            case 'skill': miningUI.loadMiningSkillTree(); break;
-            case 'exchange': miningUI.loadMiningExchange(); break;
-        }
-    }
-};
-
-// ==================== ATTACH MINING EVENTS ====================
-function attachMiningEvents() {
-    console.log('🔗 Attaching mining events...');
-    
-    const backBtn = document.getElementById('back-to-main-from-mining');
-    if (backBtn) {
-        const newBackBtn = backBtn.cloneNode(true);
-        backBtn.parentNode.replaceChild(newBackBtn, backBtn);
-        newBackBtn.addEventListener('click', function() {
-            console.log('◀ Back to main clicked');
-            switchToMainFromMining();
-        });
-    }
-    
-    document.querySelectorAll('.mining-tab').forEach(tab => {
-        const tabId = tab.getAttribute('data-mining-tab');
-        const newTab = tab.cloneNode(true);
-        tab.parentNode.replaceChild(newTab, tab);
-        newTab.setAttribute('onclick', `window.handleMiningTabClick('${tabId}')`);
-        console.log(`✅ Tab ${tabId} event attached`);
-    });
-    
-    console.log('✅ Mining events attached!');
-}
-
 // ==================== CREATE MINING MENU ====================
 function createMiningMenu() {
     console.log('🔨 createMiningMenu() called');
@@ -291,45 +437,68 @@ function createMiningMenu() {
     attachMiningEvents();
 }
 
-// ==================== SWITCH TO MAIN FROM MINING ====================
-function switchToMainFromMining() {
-    console.log('◀ switchToMainFromMining() called');
-    const miningMenu = document.getElementById('mining-menu');
-    const mainMenu = document.getElementById('main-menu');
-    if (miningMenu) miningMenu.style.display = 'none';
-    if (mainMenu) mainMenu.style.display = 'block';
-}
-
-// ==================== SWITCH TO DUNGEON ====================
-function switchToDungeon() {
-    if (!checkDungeonUnlock()) {
-        notification.error('🔒 DUNGEON TERKUNCI! Butuh Ghost Ship (500💎) + One Ring (10 Secret Fish)!');
-        return;
+// ==================== ATTACH MINING EVENTS ====================
+function attachMiningEvents() {
+    console.log('🔗 Attaching mining events...');
+    
+    const backBtn = document.getElementById('back-to-main-from-mining');
+    if (backBtn) {
+        const newBackBtn = backBtn.cloneNode(true);
+        backBtn.parentNode.replaceChild(newBackBtn, backBtn);
+        newBackBtn.addEventListener('click', function() {
+            console.log('◀ Back to main clicked');
+            switchToMainFromMining();
+        });
     }
-    document.getElementById('main-menu').style.display = 'none';
-    document.getElementById('dungeon-menu').style.display = 'block';
-    dungeonUI.loadDungeonCharacter();
-    dungeonUI.loadDungeonShop();
-    dungeonUI.loadDungeonLevels();
-    dungeonUI.loadTokenExchange();
-    dungeonUI.updateDungeonStats();
-}
-
-function switchToMain() {
-    document.getElementById('dungeon-menu').style.display = 'none';
-    document.getElementById('main-menu').style.display = 'block';
+    
+    document.querySelectorAll('.mining-tab').forEach(tab => {
+        const tabId = tab.getAttribute('data-mining-tab');
+        const newTab = tab.cloneNode(true);
+        tab.parentNode.replaceChild(newTab, tab);
+        newTab.addEventListener('click', function(e) {
+            console.log('📑 Mining tab clicked:', tabId);
+            e.preventDefault();
+            
+            document.querySelectorAll('.mining-tab').forEach(t => t.classList.remove('active'));
+            this.classList.add('active');
+            
+            document.querySelectorAll('.mining-pane').forEach(p => p.classList.remove('active'));
+            const pane = document.getElementById(`mining-${tabId}`);
+            if (pane) pane.classList.add('active');
+            
+            if (typeof miningUI !== 'undefined') {
+                switch(tabId) {
+                    case 'main': miningUI.loadMiningMain(); break;
+                    case 'shop': miningUI.loadMiningShop(); break;
+                    case 'skill': miningUI.loadMiningSkillTree(); break;
+                    case 'exchange': miningUI.loadMiningExchange(); break;
+                }
+            }
+        });
+    });
+    
+    console.log('✅ Mining events attached!');
 }
 
 // ==================== SETUP FISHING BUTTON ====================
+let fishingButtonSetup = false;
+
 function setupFishingButton() {
+    if (fishingButtonSetup) {
+        console.log('⚠️ Fishing button already setup, skipping...');
+        return;
+    }
+    
     const fishBtn = document.getElementById('fish-btn');
     if (!fishBtn) {
         console.error('❌ Fish button not found!');
         return;
     }
+    
     console.log('✅ Fish button found');
     const newFishBtn = fishBtn.cloneNode(true);
     fishBtn.parentNode.replaceChild(newFishBtn, fishBtn);
+    
     newFishBtn.addEventListener('click', function(e) {
         console.log('🔄 Fish button clicked!');
         e.preventDefault();
@@ -339,6 +508,8 @@ function setupFishingButton() {
         }
         fishingSystem.startFishing();
     });
+    
+    fishingButtonSetup = true;
     console.log('✅ Fishing button listener attached!');
 }
 
@@ -576,10 +747,55 @@ function initGame() {
 
     saveManager.load();
 
+    // Setup initial spot
+    currentSpot = 0;
+    const initialSpot = FISHING_SPOTS[0];
+    if (initialSpot) {
+        document.body.style.background = initialSpot.background;
+        document.body.style.backgroundSize = 'cover';
+        document.body.style.backgroundAttachment = 'fixed';
+    }
+
     uiManager.createSpotButtons();
     uiManager.updateTopBar();
     uiManager.updateWeatherDisplay();
     uiManager.updateLuckDisplay();
+
+    // Setup spot buttons
+    const spotContainer = document.getElementById('spot-buttons');
+    if (spotContainer) {
+        spotContainer.innerHTML = '';
+        FISHING_SPOTS.forEach(spot => {
+            const spotBtn = document.createElement('button');
+            spotBtn.className = 'spot-btn';
+            spotBtn.setAttribute('data-spot', spot.id);
+            spotBtn.textContent = spot.name;
+            spotBtn.style.background = spot.id === currentSpot ? '#FFD700' : spot.color;
+            spotBtn.style.color = spot.id === currentSpot ? '#000' : '#fff';
+            spotBtn.style.padding = '8px 16px';
+            spotBtn.style.border = 'none';
+            spotBtn.style.borderRadius = '20px';
+            spotBtn.style.margin = '5px';
+            spotBtn.style.cursor = 'pointer';
+            spotBtn.style.fontWeight = 'bold';
+            spotBtn.style.transition = 'all 0.3s';
+            
+            if (spot.id === 7) {
+                spotBtn.style.animation = 'pulse 2s infinite';
+                spotBtn.style.boxShadow = '0 0 15px #00ffff';
+            }
+            if (spot.id === 8) {
+                spotBtn.style.animation = 'valinorPulse 2s infinite';
+                spotBtn.style.boxShadow = '0 0 15px #FFD700';
+            }
+            
+            spotBtn.addEventListener('click', () => {
+                switchFishingSpot(spot.id);
+            });
+            
+            spotContainer.appendChild(spotBtn);
+        });
+    }
 
     inventoryUI.loadBackpack();
     inventoryUI.loadSellItems();
@@ -673,6 +889,9 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 // Export global functions
+window.switchFishingSpot = switchFishingSpot;
+window.currentSpot = currentSpot;
+window.currentDepth = currentDepth;
 window.performUpdate = performUpdate;
 window.remindLater = remindLater;
 window.ignoreUpdate = ignoreUpdate;
@@ -684,7 +903,6 @@ window.switchToMining = switchToMining;
 window.switchToMain = switchToMain;
 window.switchToMainFromMining = switchToMainFromMining;
 window.startFishing = () => fishingSystem.startFishing();
-window.handleMiningTabClick = handleMiningTabClick;
 
 window.gameData = gameData;
 window.gameState = gameState;
