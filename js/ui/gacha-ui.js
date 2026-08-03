@@ -116,7 +116,7 @@ class GachaUI {
         secretGachaBtn.className = 'gacha-btn';
         secretGachaBtn.style.marginTop = '20px';
         secretGachaBtn.style.background = 'linear-gradient(45deg, #00FFFF, #FF00FF)';
-        secretGachaBtn.innerHTML = '🎁 Gacha Ikan Secret (75 💎)';
+        secretGachaBtn.innerHTML = '🎁 Gacha Ikan Secret (100 💎)';
         secretGachaBtn.onclick = () => this.spinSecretGacha();
 
         const cryptoGachaBtn = document.createElement('button');
@@ -181,12 +181,12 @@ class GachaUI {
     }
 
     spinGacha() {
-        if (Number(gameData.coins) < 500) {
-            notification.error('❌ Koin tidak cukup! Butuh 500 koin');
+        if (Number(gameData.coins) < 1000) {
+            notification.error('❌ Koin tidak cukup! Butuh 1000 koin');
             return;
         }
 
-        gameData.coins = Number(gameData.coins) - 500;
+        gameData.coins = Number(gameData.coins) - 1000;
         gameData.gachaStats.totalSpins = Number(gameData.gachaStats.totalSpins) + 1;
 
         let luckMultiplier = 1;
@@ -240,12 +240,12 @@ class GachaUI {
     }
 
     spinSecretGacha() {
-        if (Number(gameData.diamonds) < 75) {
-            notification.error('❌ Diamond tidak cukup! Butuh 75 💎');
+        if (Number(gameData.diamonds) < 100) {
+            notification.error('❌ Diamond tidak cukup! Butuh 100 💎');
             return;
         }
 
-        gameData.diamonds = Number(gameData.diamonds) - 75;
+        gameData.diamonds = Number(gameData.diamonds) - 100;
         gameData.gachaStats.secretGachaCount = Number(gameData.gachaStats.secretGachaCount) + 1;
 
         const randomIndex = Math.floor(Math.random() * SECRET_FISH_POOL.length);
