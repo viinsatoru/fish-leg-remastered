@@ -16,6 +16,15 @@
 
 ---
 
+# Story
+
+Awalnya project ini hanya terdiri dari satu file JavaScript sekitar 7000 baris.
+
+Kemudian saya melakukan refactor selama 3 hari hingga menjadi struktur modular yang terdiri dari puluhan file JavaScript.
+
+Proses ini mengajarkan saya tentang debugging, modular architecture, dependency management, dan project organization.
+
+
 ## 📖 **Deskripsi**
 
 **Fishing Legend** adalah game memancing interaktif berbasis web yang menggabungkan elemen RPG, idle game, dan petualangan. Kumpulkan berbagai jenis ikan, tingkatkan peralatan, hadapi dungeon, dan bangun kerajaan memancingmu sendiri!
