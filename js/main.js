@@ -1,4 +1,4 @@
-// js/main.js - Entry Point (FULLY FIXED - SPOT BACKGROUND WORKING)
+// js/main.js - Entry Point (FULLY FIXED - SPOT WORKING)
 
 import { gameState, gameData } from './core/game-state.js';
 import { saveManager } from './core/save-manager.js';
@@ -38,9 +38,12 @@ let currentDepth = "surface";
 // ==================== SWITCH FISHING SPOT (FIXED) ====================
 function switchFishingSpot(spotId) {
     console.log(`🎣 Pindah ke spot: ${spotId}`);
-    currentSpot = spotId;
-    const spot = FISHING_SPOTS[spotId];
     
+    // ============ UPDATE fishingSystem.currentSpot ============
+    fishingSystem.currentSpot = spotId;
+    fishingSystem.switchSpot(spotId);
+    
+    const spot = FISHING_SPOTS[spotId];
     if (!spot) {
         console.error('❌ Spot not found!');
         return;
@@ -49,14 +52,13 @@ function switchFishingSpot(spotId) {
     console.log(`📍 Spot name: ${spot.name}`);
     console.log(`🎨 Background: ${spot.background}`);
     
-    // ============ UBAH BACKGROUND BODY ============
+    // ============ UBAH BACKGROUND ============
     document.body.style.background = spot.background;
     document.body.style.backgroundSize = 'cover';
     document.body.style.backgroundAttachment = 'fixed';
     document.body.style.backgroundPosition = 'center';
     document.body.style.transition = 'background 0.8s ease';
     
-    // ============ UBAH BACKGROUND MAIN CONTENT ============
     const mainContent = document.querySelector('.main-content');
     if (mainContent) {
         mainContent.style.background = `linear-gradient(145deg, ${spot.color}33, rgba(15,14,26,0.85))`;
@@ -64,7 +66,6 @@ function switchFishingSpot(spotId) {
         mainContent.style.border = `1px solid ${spot.color}22`;
     }
     
-    // ============ UBAH BACKGROUND FISHING AREA ============
     const fishingArea = document.querySelector('.fishing-area');
     if (fishingArea) {
         fishingArea.style.background = `
@@ -87,12 +88,12 @@ function switchFishingSpot(spotId) {
         uiManager.updateWeatherDisplay();
     }
     
-    // Notifikasi
     if (window.notification) {
         notification.success(`🎣 Pindah ke ${spot.name}`);
     }
     
     console.log(`✅ Spot changed to: ${spot.name}`);
+    console.log(`✅ fishingSystem.currentSpot: ${fishingSystem.currentSpot}`);
 }
 
 // ==================== UPDATE SPOT BUTTONS ====================
@@ -101,7 +102,7 @@ function updateSpotButtons() {
     spotButtons.forEach(btn => {
         const spotId = parseInt(btn.getAttribute('data-spot'));
         const spot = FISHING_SPOTS[spotId];
-        if (spotId === currentSpot) {
+        if (spotId === fishingSystem.currentSpot) {
             btn.style.background = '#FFD700';
             btn.style.color = '#000';
             btn.style.boxShadow = '0 0 30px rgba(255,215,0,0.3)';
@@ -119,7 +120,7 @@ function updateSpotButtons() {
 function updateSpotDisplay() {
     const spotDisplay = document.getElementById('spot-display');
     if (!spotDisplay) return;
-    const spot = FISHING_SPOTS[currentSpot];
+    const spot = FISHING_SPOTS[fishingSystem.currentSpot];
     if (spot) {
         spotDisplay.innerHTML = `<span style="color: white; font-weight: bold;">📍 ${spot.name}</span>`;
     }
@@ -131,7 +132,7 @@ function createFishAnimation() {
     if (!fishDisplay) return;
     
     fishDisplay.innerHTML = '';
-    const spot = FISHING_SPOTS[currentSpot];
+    const spot = FISHING_SPOTS[fishingSystem.currentSpot];
     if (!spot) return;
     
     const fishes = spot.fishes || [];
@@ -748,7 +749,7 @@ function initGame() {
     saveManager.load();
 
     // Setup initial spot
-    currentSpot = 0;
+    fishingSystem.currentSpot = 0;
     const initialSpot = FISHING_SPOTS[0];
     if (initialSpot) {
         document.body.style.background = initialSpot.background;
@@ -770,8 +771,8 @@ function initGame() {
             spotBtn.className = 'spot-btn';
             spotBtn.setAttribute('data-spot', spot.id);
             spotBtn.textContent = spot.name;
-            spotBtn.style.background = spot.id === currentSpot ? '#FFD700' : spot.color;
-            spotBtn.style.color = spot.id === currentSpot ? '#000' : '#fff';
+            spotBtn.style.background = spot.id === fishingSystem.currentSpot ? '#FFD700' : spot.color;
+            spotBtn.style.color = spot.id === fishingSystem.currentSpot ? '#000' : '#fff';
             spotBtn.style.padding = '8px 16px';
             spotBtn.style.border = 'none';
             spotBtn.style.borderRadius = '20px';
