@@ -4,8 +4,8 @@
 export function createDefaultGameState() {
     return {
         version: 1,
-        coins: 100000000,
-        diamonds: 1000000,
+        coins: 1000,
+        diamonds: 0,
         exp: 0,
         level: 1,
         currentRod: 0,
