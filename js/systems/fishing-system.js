@@ -13,7 +13,7 @@ let currentSpot = 0;
 let currentDepth = "surface";
 let isFishing = false;
 let currentPullHandler = null;
-let autoSellSettings = { basic: false, legendary: false };
+let autoSellSettings = { basic: false, legendary: false, mythical: false };
 let caughtSecretSpots = { danau: false, kuil: false, laut: false, sungai: false, angkasa: false, brainrot: false, crypto: false, atlantis: false, valinor: false };
 
 // ==================== FISHING SYSTEM ====================
@@ -187,7 +187,6 @@ class FishingSystem {
         return { ...availableFishes[0] };
     }
 
-    // ============ START FISHING WITH MINIGAME ============
     startFishing() {
         console.log('🎣 FishingSystem.startFishing() CALLED!');
         
@@ -254,7 +253,7 @@ class FishingSystem {
 
                 if (this.hasActivePet(6) && Math.random() * 100 < 10) {
                     console.log('🦨 Racoon double catch!');
-                    this.finishFishing({ ...fish }, perfectCatch);
+                    this.finishFishing({ ...fish }, perfectCatch, true);
                     eventBus.emit(EVENTS.NOTIFICATION, { message: '🦨 Racoon: Dapat ikan double!', type: 'success' });
                 }
             } else {
@@ -317,30 +316,56 @@ class FishingSystem {
         return isPerfect;
     }
 
-    // ============ FINISH FISHING - FIXED GAMEPASS EXP ============
-    finishFishing(fish, perfectCatch = false) {
-        console.log(`🎣 finishFishing: ${fish.name}, perfect: ${perfectCatch}`);
+    // ============ FINISH FISHING - AUTO SELL FIXED ============
+    finishFishing(fish, perfectCatch = false, isDouble = false) {
+        console.log(`🎣 finishFishing: ${fish.name}, perfect: ${perfectCatch}, double: ${isDouble}`);
         
         let priceMultiplier = 1;
         if (perfectCatch) {
             priceMultiplier = 1.5;
             eventBus.emit(EVENTS.PERFECT_CATCH, { fish });
-            eventBus.emit(EVENTS.NOTIFICATION, { message: '🎯 PERFECT CATCH! +50% Bonus', type: 'success' });
+            if (!isDouble) {
+                eventBus.emit(EVENTS.NOTIFICATION, { message: '🎯 PERFECT CATCH! +50% Bonus', type: 'success' });
+            }
         }
 
         const finalPrice = Math.floor(Number(fish.price) * priceMultiplier);
 
-        const newFish = {
-            ...fish,
-            catchTime: Date.now(),
-            perfectCatch: perfectCatch,
-            finalValue: finalPrice,
-            depth: this.currentDepth,
-            uniqueId: Date.now() + Math.random()
-        };
+        // ============ CEK AUTO SELL ============
+        const autoSell = window.autoSellSettings || { basic: false, legendary: false, mythical: false };
+        const shouldAutoSell = autoSell[fish.rarity] === true;
+        
+        console.log(`🔍 Auto sell check: ${fish.rarity} = ${shouldAutoSell}`);
 
-        gameData.backpack.push(newFish);
-        gameData.totalFishCaught = Number(gameData.totalFishCaught) + 1;
+        if (shouldAutoSell) {
+            // Auto sell - langsung tambah coin
+            gameData.coins = Number(gameData.coins) + finalPrice;
+            if (!isDouble) {
+                eventBus.emit(EVENTS.NOTIFICATION, { 
+                    message: `💰 Auto-sold: ${fish.emoji} ${fish.name} (${finalPrice} 🪙)`, 
+                    type: 'info' 
+                });
+            }
+            console.log(`💰 Auto-sold: ${fish.name} for ${finalPrice} coins`);
+        } else {
+            // Masuk ke backpack
+            const newFish = {
+                ...fish,
+                catchTime: Date.now(),
+                perfectCatch: perfectCatch,
+                finalValue: finalPrice,
+                depth: this.currentDepth,
+                uniqueId: Date.now() + Math.random()
+            };
+            gameData.backpack.push(newFish);
+            gameData.totalFishCaught = Number(gameData.totalFishCaught) + 1;
+            if (!isDouble) {
+                eventBus.emit(EVENTS.NOTIFICATION, { 
+                    message: `🐟 Dapat ${fish.emoji} ${fish.name} (${finalPrice} 🪙)`, 
+                    type: 'success' 
+                });
+            }
+        }
 
         // ============ EXP GAIN ============
         let expGained = 10;
@@ -350,17 +375,12 @@ class FishingSystem {
         gameData.exp = Number(gameData.exp) + expGained;
         this.checkLevelUp();
 
-        // ============ TAMBAHKAN GAMEPASS EXP ============
+        // ============ GAMEPASS EXP ============
         this.addGamepassExp(expGained);
-
         this.addToAquarium(fish);
 
         eventBus.emit(EVENTS.FISHING_CAUGHT, { fish, price: finalPrice, perfect: perfectCatch });
         eventBus.emit(EVENTS.BACKPACK_UPDATED, gameData.backpack);
-        eventBus.emit(EVENTS.NOTIFICATION, { 
-            message: `🐟 Dapat ${fish.emoji} ${fish.name} (${finalPrice} 🪙)`, 
-            type: 'success' 
-        });
 
         saveManager.forceSave();
         
@@ -377,7 +397,6 @@ class FishingSystem {
         }
     }
 
-    // ============ TAMBAHKAN FUNGSI GAMEPASS EXP ============
     addGamepassExp(amount) {
         console.log('🎟️ addGamepassExp called with:', amount);
         
