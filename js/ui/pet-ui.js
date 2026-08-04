@@ -1,4 +1,4 @@
-// js/ui/pet-ui.js
+// js/ui/pet-ui.js - FULL FIXED
 
 import { gameData } from '../core/game-state.js';
 import { uiManager } from './ui-manager.js';
@@ -31,6 +31,18 @@ export class PetUI {
             return;
         }
 
+        // Tampilkan slot info
+        const slots = gameData.skills.animalLovers?.unlocked ? 2 : 1;
+        const activeCount = this.getActivePets().length;
+        const slotInfo = document.createElement('div');
+        slotInfo.style.cssText = 'text-align:center;padding:10px;margin-bottom:15px;background:rgba(255,215,0,0.1);border-radius:8px;';
+        slotInfo.innerHTML = `
+            <span style="color:#FFD700;">🐕 Slot Pet: ${activeCount}/${slots}</span>
+            ${activeCount >= slots ? '<span style="color:#FF6B6B;margin-left:10px;">⚠️ Penuh!</span>' : ''}
+            ${!gameData.skills.animalLovers?.unlocked ? '<span style="color:#00ffff;margin-left:10px;">💡 Beli Animal Lovers di Skills untuk +1 slot!</span>' : ''}
+        `;
+        container.appendChild(slotInfo);
+
         PETS.forEach(pet => {
             const isOwned = gameData.pets.owned.includes(pet.id);
             const isActive = this.isPetActive(pet.id);
@@ -40,37 +52,37 @@ export class PetUI {
 
             const card = document.createElement('div');
             card.className = 'pet-card';
-            card.style.cssText = 'text-align: center; background: rgba(255,255,255,0.05); padding: 15px; border-radius: 8px;';
+            card.style.cssText = 'text-align:center;background:rgba(255,255,255,0.05);padding:15px;border-radius:8px;margin:10px;border:1px solid rgba(255,255,255,0.05);';
 
             let priceDisplay = pet.currency === 'diamonds' ? `${pet.price} 💎` : `${pet.price} 🪙`;
 
-            card.innerHTML = `
-                <div style="font-size: 3rem; margin-bottom: 10px;">${pet.emoji}</div>
-                <h3 style="color: white; margin-bottom: 5px;">${pet.name}</h3>
-                <p style="color: #ccc; font-size: 0.9rem; margin-bottom: 10px;">${pet.description}</p>
-                <p style="color: ${pet.currency === 'diamonds' ? '#00ffff' : '#ffd700'}; margin-bottom: 15px;">${priceDisplay}</p>
-                ${isOwned ? 
-                    `<button class="pet-activate-btn" ${isActive ? 'disabled' : ''}
-                            style="width: 100%; padding: 8px; background: ${isActive ? '#666' : '#4CAF50'}; border: none; border-radius: 6px; color: white; cursor: ${isActive ? 'not-allowed' : 'pointer'};">
-                        ${isActive ? '✓ ACTIVE' : '🔓 ACTIVATE'}
-                    </button>` :
-                    `<button class="pet-buy-btn" ${!canAfford ? 'disabled' : ''}
-                            style="width: 100%; padding: 8px; background: ${canAfford ? '#4CAF50' : '#666'}; border: none; border-radius: 6px; color: white; cursor: ${canAfford ? 'pointer' : 'not-allowed'};">
+            let buttonHTML = '';
+            if (isOwned) {
+                buttonHTML = `
+                    <button class="pet-activate-btn"
+                            style="width:100%;padding:8px;background:${isActive ? '#FF6B6B' : '#4CAF50'};border:none;border-radius:6px;color:white;cursor:pointer;font-size:0.85rem;"
+                            onclick="window.activatePet(${pet.id})">
+                        ${isActive ? '❌ DEACTIVATE' : '🔓 ACTIVATE'}
+                    </button>
+                `;
+            } else {
+                buttonHTML = `
+                    <button class="pet-buy-btn" ${!canAfford ? 'disabled' : ''}
+                            style="width:100%;padding:8px;background:${canAfford ? '#4CAF50' : '#666'};border:none;border-radius:6px;color:white;cursor:${canAfford ? 'pointer' : 'not-allowed'};font-size:0.85rem;"
+                            onclick="window.buyPet(${pet.id})">
                         ${canAfford ? '🛒 BELI' : '❌ TIDAK CUKUP'}
-                    </button>`
-                }
-            `;
-
-            const btn = card.querySelector('.pet-buy-btn, .pet-activate-btn');
-            if (btn) {
-                btn.addEventListener('click', () => {
-                    if (isOwned) {
-                        this.activatePet(pet.id);
-                    } else if (canAfford) {
-                        this.buyPet(pet);
-                    }
-                });
+                    </button>
+                `;
             }
+
+            card.innerHTML = `
+                <div style="font-size:3rem;margin-bottom:8px;">${pet.emoji}</div>
+                <h3 style="color:white;font-size:1rem;margin-bottom:4px;">${pet.name}</h3>
+                <p style="color:#ccc;font-size:0.85rem;margin-bottom:8px;">${pet.description}</p>
+                <p style="color:${pet.currency === 'diamonds' ? '#00ffff' : '#ffd700'};font-size:0.9rem;margin-bottom:10px;">${priceDisplay}</p>
+                ${isActive ? '<div style="color:#4CAF50;font-size:0.8rem;margin-bottom:8px;">✅ ACTIVE</div>' : ''}
+                ${buttonHTML}
+            `;
 
             container.appendChild(card);
         });
@@ -99,7 +111,14 @@ export class PetUI {
         return activePets;
     }
 
-    buyPet(pet) {
+    // ============ FIX: buyPet PAKAI petId ============
+    buyPet(petId) {
+        const pet = PETS.find(p => p.id === petId);
+        if (!pet) {
+            notification.error('❌ Pet tidak ditemukan!');
+            return;
+        }
+
         if (pet.currency === "coins") {
             if (Number(gameData.coins) >= Number(pet.price)) {
                 gameData.coins = Number(gameData.coins) - Number(pet.price);
@@ -127,6 +146,17 @@ export class PetUI {
     }
 
     activatePet(petId) {
+        const pet = PETS.find(p => p.id === petId);
+        if (!pet) {
+            notification.error('❌ Pet tidak ditemukan!');
+            return;
+        }
+
+        if (!gameData.pets.owned.includes(petId)) {
+            notification.error('❌ Kamu belum memiliki pet ini!');
+            return;
+        }
+
         const slots = gameData.skills.animalLovers?.unlocked ? 2 : 1;
 
         if (!Array.isArray(gameData.pets.active)) {
@@ -139,16 +169,20 @@ export class PetUI {
 
         if (gameData.pets.active.includes(petId)) {
             gameData.pets.active = gameData.pets.active.filter(id => id !== petId);
-            notification.info(`❌ ${PETS.find(p => p.id === petId).name} dinonaktifkan!`);
-        } else {
-            if (gameData.pets.active.length >= slots) {
-                notification.error(`❌ Slot pet penuh! (max ${slots})`);
-                return;
-            }
-            gameData.pets.active.push(petId);
-            notification.success(`✨ ${PETS.find(p => p.id === petId).name} aktif!`);
+            notification.info(`❌ ${pet.name} dinonaktifkan!`);
+            saveManager.forceSave();
+            this.loadPetShop();
+            uiManager.updateLuckDisplay();
+            return;
         }
 
+        if (gameData.pets.active.length >= slots) {
+            notification.error(`❌ Slot pet penuh! (max ${slots})`);
+            return;
+        }
+
+        gameData.pets.active.push(petId);
+        notification.success(`✨ ${pet.name} aktif!`);
         saveManager.forceSave();
         this.loadPetShop();
         uiManager.updateLuckDisplay();
@@ -156,3 +190,6 @@ export class PetUI {
 }
 
 export const petUI = new PetUI();
+
+window.buyPet = (id) => petUI.buyPet(id);
+window.activatePet = (id) => petUI.activatePet(id);
